@@ -148,7 +148,7 @@
     owner: root
     group: root
     mode: 0600
-  when: (item[0].type == "mesh") or (item[0].type == "central" and inventory_hostname in tinc.network.master)
+  when: (item[0].type == "mesh") or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_subelements:
     - "{{tinc.network}}"
     - node
@@ -159,7 +159,29 @@
     owner: root
     group: root
     mode: 0600
-  when: (item[0].type == "central" and inventory_hostname in tinc.network.node) or (item[0].type == "central" and inventory_hostname in tinc.network.master)
+  when: (item[0].type == "central" and (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_subelements:
     - "{{tinc.network}}"
     - master
+- name: add local scripts 
+  template:
+    src: script.j2
+    dest: /etc/tinc/{{item[0].name}}/{{item[1].name}}
+    owner: root
+    group: root
+    mode: 0700
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].master is defined and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  with_subelements:
+    - "{{tinc.network}}"
+    - script.local
+- name: add host scripts
+  template:
+    src: script.j2
+    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
+    owner: root
+    group: root
+    mode: 0700
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].master is defined and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  with_subelements:
+    - "{{tinc.network}}"
+    - script.host
