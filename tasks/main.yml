@@ -1,0 +1,124 @@
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+  tags: vars
+- name: Add tinc repo key (Ubuntu 16.04)
+  apt_key:
+    url: http://download.opensuse.org/repositories/home:alinuxninja:tinc/xUbuntu_16.04/Release.key
+    state: present
+  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "16")
+- name: Add tinc repo (Ubuntu 16.04)
+  apt_repository: repo={{item}} state=present update_cache=yes
+  with_items:
+    - 'deb http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_16.04/ /'
+    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
+  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "16")
+- name: Add tinc repo key (Ubuntu 14.04)
+  apt_key:
+    url: http://download.opensuse.org/repositories/home:alinuxninja:tinc/xUbuntu_14.04/Release.key
+    state: present
+  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14")
+- name: Add tinc repo (Ubuntu 14.04)
+  apt_repository: repo={{item}} state=present update_cache=yes
+  with_items:
+    - 'deb http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
+    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
+  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14")
+- name: Add tinc repo key (Debian 8)
+  apt_key:
+    url: http://download.opensuse.org/repositories/home:alinuxninja:tinc/Debian_8.0/Release.key
+    state: present
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version == "8")
+- name: Add tinc repo (Debian 8)
+  apt_repository: repo={{item}} state=present update_cache=yes
+  with_items:
+    - 'deb http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/Debian_8.0/ /'
+    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/Debian_8.0/ /'
+  when: (ansible_distribution == "Debian" and ansible_distribution_major_version == "8")
+- name: Add tinc repo key (Centos 6)
+  rpm_key:
+    state: present
+    key: http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/CentOS_6/repodata/repomd.xml.key
+  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+- name: Add tinc repo (Centos 6)
+  yum_repository:
+    name: nginx
+    description: tinc repo (Centos 6)
+    baseurl: http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/CentOS_6/
+    gpgcheck: yes
+    state: present
+  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+- name: Add tinc repo key (Centos 7)
+  rpm_key:
+    state: present
+    key: http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/CentOS_7/repodata/repomd.xml.key
+  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+- name: Add tinc repo (Centos 7)
+  yum_repository:
+    name: nginx
+    description: tinc repo (Centos 7)
+    baseurl: http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/CentOS_7/
+    gpgcheck: yes
+    state: present
+  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{packages}}"
+- name: create folder for tinc keys
+  file:
+    path: /etc/ansible/roles/tinc/keys
+    state: directory
+    group: root
+    owner: root
+    mode: 0755
+  delegate_to: localhost
+- name: generate host keys (directory)
+  file:
+    path: /etc/ansible/roles/tinc/keys/{{item}}
+    state: directory
+    group: root
+    owner: root
+    mode: 0755
+  with_items: groups['all']
+  delegate_to: localhost
+- name: generate host keys (private key)
+  shell: openssl genpkey -algorithm RSA -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv 2048
+  args:
+    creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv
+  with_items: groups['all']
+  delegate_to: localhost
+- name: generate host keys (public key)
+  shell: openssl rsa -pubout -in /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
+  args:
+    creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
+  with_items: groups['all']
+  delegate_to: localhost
+- name: create network directory
+  file:
+    path: /etc/tinc/{{item.name}}
+    state: directory
+    group: root
+    owner: root
+    mode: 0755
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  with_items: "{{ tinc.network }}"
+- name: configure tinc.conf
+  template:
+    src: tinc.conf
+    dest: /etc/tinc/{{item.name}}/tinc.conf
+    group: root
+    owner: root
+    mode: 0644
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  with_items: "{{ tinc.network }}"
+#- name: add host keys
+#  - file:
+#    src: /etc/tinc/
+#    dest:
+#    owner: root
+#    group: root
