@@ -1,0 +1,7 @@
+Address = {{item[1].address}}
+{% for config, config_value in item[0].config.host.iteritems() -%}
+{{config}} = {{config_value}}
+{% endfor -%}
+{% for line in lookup('file', '/etc/ansible/roles/tinc/keys/'~item[1].name~'/rsa_key.pub') -%}
+{{line}}
+{%- endfor -%}

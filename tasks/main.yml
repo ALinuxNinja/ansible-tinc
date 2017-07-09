@@ -109,16 +109,57 @@
   with_items: "{{ tinc.network }}"
 - name: configure tinc.conf
   template:
-    src: tinc.conf
+    src: tinc_conf.j2
     dest: /etc/tinc/{{item.name}}/tinc.conf
     group: root
     owner: root
     mode: 0644
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_items: "{{ tinc.network }}"
-#- name: add host keys
-#  - file:
-#    src: /etc/tinc/
-#    dest:
-#    owner: root
-#    group: root
+- name: create host key directories
+  file:
+    dest: /etc/tinc/{{item.name}}/hosts
+    group: root
+    owner: root
+    mode: 0755
+    state: directory
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  with_items: "{{ tinc.network }}"
+- name: add public key for {{inventory_hostname}}
+  copy:
+    src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.pub
+    dest: /etc/tinc/{{item.name}}/rsa_key.pub
+    owner: root
+    group: root
+    mode: 0600
+  with_items: "{{ tinc.network }}"
+- name: add private key for {{inventory_hostname}}
+  copy:
+    src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.priv
+    dest: /etc/tinc/{{item.name}}/rsa_key.priv
+    owner: root
+    group: root
+    mode: 0600
+  with_items: "{{ tinc.network }}"
+- name: add host keys (Peer Nodes)
+  template:
+    src: host.j2
+    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
+    owner: root
+    group: root
+    mode: 0600
+  when: (item[0].type == "mesh") or (item[0].type == "central" and inventory_hostname in tinc.network.master)
+  with_subelements:
+    - "{{tinc.network}}"
+    - node
+- name: add host keys (Master Nodes)
+  copy:
+    src: /etc/ansible/roles/tinc/keys/{{item[1].name}}/rsa_key.pub
+    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
+    owner: root
+    group: root
+    mode: 0600
+  when: (item[0].type == "central" and inventory_hostname in tinc.network.node) or (item[0].type == "central" and inventory_hostname in tinc.network.master)
+  with_subelements:
+    - "{{tinc.network}}"
+    - master
