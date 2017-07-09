@@ -84,19 +84,19 @@
     group: root
     owner: root
     mode: 0755
-  with_items: groups['all']
+  with_items: "{{groups['all']}}"
   delegate_to: localhost
 - name: generate host keys (private key)
   shell: openssl genpkey -algorithm RSA -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv 2048
   args:
     creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv
-  with_items: groups['all']
+  with_items: "{{groups['all']}}"
   delegate_to: localhost
 - name: generate host keys (public key)
   shell: openssl rsa -pubout -in /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
   args:
     creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
-  with_items: groups['all']
+  with_items: "{{groups['all']}}"
   delegate_to: localhost
 - name: create network directory
   file:
