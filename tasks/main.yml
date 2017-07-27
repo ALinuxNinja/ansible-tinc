@@ -14,19 +14,8 @@
   apt_repository: repo={{item}} state=present update_cache=yes
   with_items:
     - 'deb http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_16.04/ /'
-    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
+    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_16.04/ /'
   when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "16")
-- name: Add tinc repo key (Ubuntu 14.04)
-  apt_key:
-    url: http://download.opensuse.org/repositories/home:alinuxninja:tinc/xUbuntu_14.04/Release.key
-    state: present
-  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14")
-- name: Add tinc repo (Ubuntu 14.04)
-  apt_repository: repo={{item}} state=present update_cache=yes
-  with_items:
-    - 'deb http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
-    - 'deb-src http://download.opensuse.org/repositories/home:/alinuxninja:/tinc/xUbuntu_14.04/ /'
-  when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "14")
 - name: Add tinc repo key (Debian 8)
   apt_key:
     url: http://download.opensuse.org/repositories/home:alinuxninja:tinc/Debian_8.0/Release.key
@@ -64,11 +53,17 @@
     gpgcheck: yes
     state: present
   when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
-- name: install packages
-  package:
-    name: "{{ item }}"
+- name: install packages (apt)
+  apt:
+    name: tinc
+    update_cache: yes
     state: latest
-  with_items: "{{packages}}"
+  when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
+- name: install packages (yum)
+  yum:
+    name: tinc
+    state: latest
+  when: (ansible_distribution == "CentOS")
 - name: create folder for tinc keys
   file:
     path: /etc/ansible/roles/tinc/keys
@@ -165,7 +160,7 @@
     - master
 - name: add local scripts 
   template:
-    src: script.j2
+    src: local_script.j2
     dest: /etc/tinc/{{item[0].name}}/{{item[1].name}}
     owner: root
     group: root
@@ -176,7 +171,7 @@
     - script.local
 - name: add host scripts
   template:
-    src: script.j2
+    src: host_script.j2
     dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
     owner: root
     group: root
@@ -185,3 +180,17 @@
   with_subelements:
     - "{{tinc.network}}"
     - script.host
+- name: disable all systemd services
+  systemd:
+    name: tinc
+    enabled: no
+    masked: no
+    state: stopped
+- name: enable all systemd services
+  systemd:
+    name: tinc@{{item.name}}
+    enabled: yes
+    state: started
+    masked: no
+  with_items: "{{ tinc.network }}"
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))

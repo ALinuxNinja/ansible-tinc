@@ -1,5 +1,6 @@
 ## Managed by Ansible
 ## Designed by ALinuxNinja
+Name = {{inventory_hostname}}
 {% for conf, conf_val in item.config.local.iteritems() -%}
 {{conf}} = {{conf_val}}
 {% endfor -%}

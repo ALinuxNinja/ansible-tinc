@@ -1,0 +1,14 @@
+#!/bin/bash
+{% for host in item[0].node -%}
+{%- if host.name == inventory_hostname and host.script is defined and host.script.host is defined and host['script']['host'][item[1].name] is defined -%}
+{%- for line in host['script']['host'][item[1].name] -%}
+{{line}}
+{% endfor -%}
+{% for host in item[0].master -%}
+{%- if host.name == inventory_hostname and host.script is defined and host.script.host is defined and host['script']['host'][item[1].name] is defined -%}
+{%- for line in host['script']['host'][item[1].name] -%}
+{{line}}
+{% endfor -%}
+{% for line in item[1].contents -%}
+{{line}}
+{% endfor -%}

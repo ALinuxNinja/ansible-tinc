@@ -1,0 +1,22 @@
+#!/bin/bash
+{% for node in item[0].node if (node.name == inventory_hostname) and (node.local_address is defined) -%}
+{%- if item[1].name == "tinc-up" -%}
+ip addr add {{node.local_address}} dev $INTERFACE
+ip link set $INTERFACE up
+{% endif -%}
+{%- if item[1].name == "tinc-down" -%}
+ip link set $INTERFACE down
+{% endif -%}
+{%- endfor -%}
+{% for node in item[0].master if (node.name == inventory_hostname) and (node.local_address is defined) -%}
+{%- if item[1].name == "tinc-up" -%}
+ip addr add {{node.local_address}} dev $INTERFACE
+ip link set $INTERFACE up
+{% endif -%}
+{%- if item[1].name == "tinc-down" -%}
+ip link set $INTERFACE down
+{% endif -%}
+{%- endfor -%}
+{% for line in item[1].contents -%}
+{{line}}
+{% endfor -%}
