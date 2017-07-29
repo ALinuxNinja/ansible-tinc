@@ -1,22 +1,24 @@
 #!/bin/bash
-{% for node in item[0].node if (node.name == inventory_hostname) and (node.local_address is defined) -%}
-{%- if item[1].name == "tinc-up" -%}
-ip addr add {{node.local_address}} dev $INTERFACE
+## File managed by Ansible
+## Do not manually edit, changes will be lost
+
+{% if item[1].name == "tinc-up" -%}
+{%- if (item[0].node | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
+ip addr add {{item[0].node | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | list | first}} dev $INTERFACE
 ip link set $INTERFACE up
 {% endif -%}
-{%- if item[1].name == "tinc-down" -%}
-ip link set $INTERFACE down
-{% endif -%}
-{%- endfor -%}
-{% for node in item[0].master if (node.name == inventory_hostname) and (node.local_address is defined) -%}
-{%- if item[1].name == "tinc-up" -%}
-ip addr add {{node.local_address}} dev $INTERFACE
+{%- if item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
+ip addr add {{item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | list | first}} dev $INTERFACE
 ip link set $INTERFACE up
 {% endif -%}
-{%- if item[1].name == "tinc-down" -%}
+{%- elif item[1].name == "tinc-down" -%}
+{%- if (item[0].node | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
 ip link set $INTERFACE down
 {% endif -%}
-{%- endfor -%}
+{%- if item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
+ip link set $INTERFACE down
+{% endif -%}
+{% endif -%}
 {% for line in item[1].contents -%}
 {{line}}
 {% endfor -%}

@@ -158,6 +158,8 @@
   with_subelements:
     - "{{tinc.network}}"
     - master
+    - flags:
+      skip_missing: True
 - name: add local scripts 
   template:
     src: local_script.j2
@@ -165,7 +167,7 @@
     owner: root
     group: root
     mode: 0700
-  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].master is defined and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_subelements:
     - "{{tinc.network}}"
     - script.local
@@ -176,7 +178,7 @@
     owner: root
     group: root
     mode: 0700
-  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].master is defined and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_subelements:
     - "{{tinc.network}}"
     - script.host
@@ -193,4 +195,4 @@
     state: started
     masked: no
   with_items: "{{ tinc.network }}"
-  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
