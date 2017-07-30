@@ -182,17 +182,21 @@
   with_subelements:
     - "{{tinc.network}}"
     - script.host
-- name: disable all systemd services
+- name: get list of enabled tinc networks
+  shell: ls /etc/systemd/system/tinc.service.wants/ | sed -n 's/tinc@\(.*\)\.service$/\1/p'
+  register: enabled_networks
+- name: disable unneeded services
   systemd:
-    name: tinc
+    name: tinc@{{item}}
     enabled: no
     masked: no
     state: stopped
+  when: (tinc.network | selectattr('name','equalto',item) | list | count == 0) 
+  with_items: "{{enabled_networks.stdout_lines}}"
 - name: enable all systemd services
   systemd:
     name: tinc@{{item.name}}
     enabled: yes
-    state: started
     masked: no
   with_items: "{{ tinc.network }}"
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
