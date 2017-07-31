@@ -165,6 +165,7 @@
     group: root
     mode: 0700
   when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
+  with_subelements:
     - "{{tinc.network}}"
     - script.host
 - name: get list of enabled tinc networks
