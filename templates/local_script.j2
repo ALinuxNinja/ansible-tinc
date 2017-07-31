@@ -7,15 +7,8 @@
 ip addr add {{item[0].node | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | list | first}} dev $INTERFACE
 ip link set $INTERFACE up
 {% endif -%}
-{%- if item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
-ip addr add {{item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | list | first}} dev $INTERFACE
-ip link set $INTERFACE up
-{% endif -%}
 {%- elif item[1].name == "tinc-down" -%}
 {%- if (item[0].node | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
-ip link set $INTERFACE down
-{% endif -%}
-{%- if item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname) | map(attribute='local_address') | default('') ) != '' -%}
 ip link set $INTERFACE down
 {% endif -%}
 {% endif -%}
