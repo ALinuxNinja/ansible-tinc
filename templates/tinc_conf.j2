@@ -5,19 +5,6 @@ Name = {{inventory_hostname}}
 {{conf}} = {{conf_val}}
 {% endfor -%}
 
-{% if (item.type == "mesh") -%}
 {%- for server in item.node if server.name != inventory_hostname -%}
 ConnectTo = {{ server.name }}
 {% endfor -%}
-{% elif (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0)) -%}
-{%- for server in item.node -%}
-ConnectTo = {{ server.name }}
-{% endfor -%}
-{% for server in item.master if server.name != inventory_hostname -%}
-ConnectTo = {{ server.name }}
-{% endfor -%}
-{%- elif (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) -%}
-{% for server in item.master if server.name != inventory_hostname -%}
-ConnectTo = {{ server.name }}
-{% endfor -%}
-{%- endif -%}

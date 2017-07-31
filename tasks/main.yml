@@ -100,7 +100,7 @@
     group: root
     owner: root
     mode: 0755
-  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
 - name: configure tinc.conf
   template:
@@ -109,7 +109,7 @@
     group: root
     owner: root
     mode: 0644
-  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
 - name: create host key directories
   file:
@@ -118,7 +118,7 @@
     owner: root
     mode: 0755
     state: directory
-  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item.master is defined and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
 - name: add public key for {{inventory_hostname}}
   copy:
@@ -136,38 +136,24 @@
     group: root
     mode: 0600
   with_items: "{{ tinc.network }}"
-- name: add host keys (Peer Nodes)
+- name: add host keys
   template:
     src: host.j2
     dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
     owner: root
     group: root
     mode: 0600
-  when: (item[0].type == "mesh") or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
   with_subelements:
     - "{{tinc.network}}"
     - node
-- name: add host keys (Master Nodes)
-  copy:
-    src: /etc/ansible/roles/tinc/keys/{{item[1].name}}/rsa_key.pub
-    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
-    owner: root
-    group: root
-    mode: 0600
-  when: (item[0].type == "central" and (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
-  with_subelements:
-    - "{{tinc.network}}"
-    - master
-    - flags:
-      skip_missing: True
-- name: add local scripts 
+- name: add local scripts
   template:
     src: local_script.j2
     dest: /etc/tinc/{{item[0].name}}/{{item[1].name}}
     owner: root
     group: root
     mode: 0700
-  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_subelements:
     - "{{tinc.network}}"
     - script.local
@@ -178,8 +164,7 @@
     owner: root
     group: root
     mode: 0700
-  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item[0].master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
-  with_subelements:
+  when: (item[0].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
     - "{{tinc.network}}"
     - script.host
 - name: get list of enabled tinc networks
@@ -191,7 +176,7 @@
     enabled: no
     masked: no
     state: stopped
-  when: (tinc.network | selectattr('name','equalto',item) | list | count == 0) 
+  when: (tinc.network | selectattr('name','equalto',item) | list | count == 0)
   with_items: "{{enabled_networks.stdout_lines}}"
 - name: enable all systemd services
   systemd:
@@ -199,4 +184,4 @@
     enabled: yes
     masked: no
   with_items: "{{ tinc.network }}"
-  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0) or (item[0].type == "central" and (item.master | selectattr('name','equalto',inventory_hostname)| list | count > 0))
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
