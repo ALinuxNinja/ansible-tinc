@@ -1,0 +1,7 @@
+- name: tinc_restart
+  systemd:
+    name: tinc@{{item.name}}
+    state: restarted
+    daemon_reload: yes
+  with_items: "{{ tinc.network }}"
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
