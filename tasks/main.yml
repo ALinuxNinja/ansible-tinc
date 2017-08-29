@@ -128,6 +128,7 @@
     owner: root
     group: root
     mode: 0600
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
 - name: add private key for {{inventory_hostname}}
@@ -137,6 +138,7 @@
     owner: root
     group: root
     mode: 0600
+  when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
 - name: add host keys
