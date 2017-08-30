@@ -148,7 +148,7 @@
     owner: root
     group: root
     mode: 0600
-  when: (tinc.network.[item[0].name].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
+  when: (tinc.network[item[0].name].node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_subelements:
     - "{{tinc.network}}"
     - node
