@@ -159,7 +159,7 @@
     - "{{tinc.network}}"
     - node
   vars:
-    node_query: "[?name==item[0].name]"
+    node_query: "[?name=='Sophia']"
   tags:
     - debug
 - name: add local scripts
