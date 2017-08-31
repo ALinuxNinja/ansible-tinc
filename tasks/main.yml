@@ -146,7 +146,7 @@
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
   no_log: true
-- name: add host keys
+- name: Add keys for host
   template:
     src: host.j2
     dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
@@ -159,7 +159,7 @@
     - node
   notify: tinc_restart
   no_log: true
-- name: add local scripts
+- name: Add local scripts
   template:
     src: local_script.j2
     dest: /etc/tinc/{{item[0].name}}/{{item[1].name}}
@@ -172,7 +172,7 @@
     - script.local
   notify: tinc_restart
   no_log: true
-- name: add host scripts
+- name: Add host-specific scripts for {{inventory_hostname}}
   template:
     src: host_script.j2
     dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
@@ -185,10 +185,10 @@
     - script.host
   notify: tinc_restart
   no_log: true
-- name: get list of enabled tinc networks
+- name: Get enabled tinc networks
   shell: ls /etc/systemd/system/tinc.service.wants/ | sed -n 's/tinc@\(.*\)\.service$/\1/p'
   register: enabled_networks
-- name: disable unneeded services
+- name: Disable all Tinc networks
   systemd:
     name: tinc@{{item}}
     enabled: no
@@ -196,7 +196,7 @@
     state: stopped
   when: (tinc.network | selectattr('name','equalto',item) | list | count == 0)
   with_items: "{{enabled_networks.stdout_lines}}"
-- name: enable all systemd services
+- name: Enable Tinc networks
   systemd:
     name: tinc@{{item.name}}
     enabled: yes
