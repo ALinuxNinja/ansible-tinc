@@ -64,7 +64,7 @@
     name: tinc
     state: latest
   when: (ansible_distribution == "CentOS")
-- name: Create local folder for tinc keys
+- name: Create local folder to store host keys
   file:
     path: /etc/ansible/roles/tinc/keys
     state: directory
