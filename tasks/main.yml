@@ -148,7 +148,7 @@
     owner: root
     group: root
     mode: 0600
-  when: (json_query("['tinc']['network'][?name==[item[0].name]]['node'][?name==[inventory_hostname]]")) is defined
+  when: (tinc.network | json_query("[?name==[item[0].name]]['node'][?name==[inventory_hostname]]") | default("")) != ""
   with_subelements:
     - "{{tinc.network}}"
     - node
