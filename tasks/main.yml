@@ -102,6 +102,7 @@
     mode: 0755
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
+  no_log: true
 - name: configure tinc.conf
   template:
     src: tinc_conf.j2
@@ -112,6 +113,7 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
+  no_log: true
 - name: create host key directories
   file:
     dest: /etc/tinc/{{item.name}}/hosts
@@ -121,6 +123,7 @@
     state: directory
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
+  no_log: true
 - name: add public key for {{inventory_hostname}}
   copy:
     src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.pub
@@ -131,6 +134,7 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
+  no_log: true
 - name: add private key for {{inventory_hostname}}
   copy:
     src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.priv
@@ -141,6 +145,7 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
+  no_log: true
 - name: add host keys
   template:
     src: host.j2
@@ -153,6 +158,7 @@
     - "{{tinc.network}}"
     - node
   notify: tinc_restart
+  no_log: true
 - name: add local scripts
   template:
     src: local_script.j2
@@ -165,6 +171,7 @@
     - "{{tinc.network}}"
     - script.local
   notify: tinc_restart
+  no_log: true
 - name: add host scripts
   template:
     src: host_script.j2
@@ -177,6 +184,7 @@
     - "{{tinc.network}}"
     - script.host
   notify: tinc_restart
+  no_log: true
 - name: get list of enabled tinc networks
   shell: ls /etc/systemd/system/tinc.service.wants/ | sed -n 's/tinc@\(.*\)\.service$/\1/p'
   register: enabled_networks
@@ -195,3 +203,4 @@
     masked: no
   with_items: "{{ tinc.network }}"
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
+  no_log: true
