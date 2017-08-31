@@ -159,7 +159,7 @@
     - "{{tinc.network}}"
     - node
   vars:
-    node_query: "[?name=='Sophia']"
+    node_query: "[?name=='core']"
   tags:
     - debug
 - name: add local scripts
