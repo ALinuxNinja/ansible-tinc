@@ -53,18 +53,18 @@
     gpgcheck: yes
     state: present
   when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
-- name: install packages (apt)
+- name: Install packages (apt)
   apt:
     update_cache: yes
     state: latest
   with_items: "{{packages}}"
   when: (ansible_distribution == "Debian" or ansible_distribution == "Ubuntu")
-- name: install packages (yum)
+- name: Install packages (yum)
   yum:
     name: tinc
     state: latest
   when: (ansible_distribution == "CentOS")
-- name: create folder for tinc keys
+- name: Create local folder for tinc keys
   file:
     path: /etc/ansible/roles/tinc/keys
     state: directory
@@ -72,7 +72,7 @@
     owner: root
     mode: 0755
   delegate_to: localhost
-- name: generate host keys (directory)
+- name: Create host key directories
   file:
     path: /etc/ansible/roles/tinc/keys/{{item}}
     state: directory
@@ -81,19 +81,19 @@
     mode: 0755
   with_items: "{{groups['all']}}"
   delegate_to: localhost
-- name: generate host keys (private key)
+- name: Generate host keys (private key)
   shell: openssl genpkey -algorithm RSA -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv 2048
   args:
     creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv
   with_items: "{{groups['all']}}"
   delegate_to: localhost
-- name: generate host keys (public key)
+- name: Generate host keys (public key)
   shell: openssl rsa -pubout -in /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.priv -out /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
   args:
     creates: /etc/ansible/roles/tinc/keys/{{item}}/rsa_key.pub
   with_items: "{{groups['all']}}"
   delegate_to: localhost
-- name: create network directory
+- name: Create directory for network
   file:
     path: /etc/tinc/{{item.name}}
     state: directory
@@ -103,7 +103,7 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   no_log: true
-- name: configure tinc.conf
+- name: Configure tinc.conf
   template:
     src: tinc_conf.j2
     dest: /etc/tinc/{{item.name}}/tinc.conf
@@ -114,7 +114,7 @@
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
   no_log: true
-- name: create host key directories
+- name: Create directory for hosts
   file:
     dest: /etc/tinc/{{item.name}}/hosts
     group: root
@@ -124,7 +124,7 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   no_log: true
-- name: add public key for {{inventory_hostname}}
+- name: Add public keys
   copy:
     src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.pub
     dest: /etc/tinc/{{item.name}}/rsa_key.pub
@@ -135,7 +135,7 @@
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
   no_log: true
-- name: add private key for {{inventory_hostname}}
+- name: Add private keys
   copy:
     src: /etc/ansible/roles/tinc/keys/{{inventory_hostname}}/rsa_key.priv
     dest: /etc/tinc/{{item.name}}/rsa_key.priv
