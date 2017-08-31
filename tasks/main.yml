@@ -141,18 +141,25 @@
   when: (item.node | selectattr('name','equalto',inventory_hostname) | list | count > 0)
   with_items: "{{ tinc.network }}"
   notify: tinc_restart
-- name: add host keys
-  template:
-    src: host.j2
-    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
-    owner: root
-    group: root
-    mode: 0600
-  when: (tinc.network | json_query("[?name==item[0].name].node") | default({}) | length > 0)
+#- name: add host keys
+#  template:
+#    src: host.j2
+#    dest: /etc/tinc/{{item[0].name}}/hosts/{{item[1].name}}
+#    owner: root
+#    group: root
+#    mode: 0600
+#  when: (tinc.network | json_query("[?name==item[0].name].node") | default({}) | length > 0)
+#  with_subelements:
+#    - "{{tinc.network}}"
+#    - node
+#  notify: tinc_restart
+- name: check json_query
+  debug: msg="{{ tinc.network | json_query("[?name==item[0].name].node") }}"
   with_subelements:
     - "{{tinc.network}}"
     - node
-  notify: tinc_restart
+  tags:
+    - debug
 - name: add local scripts
   template:
     src: local_script.j2
