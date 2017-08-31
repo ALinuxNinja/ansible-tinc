@@ -148,7 +148,7 @@
     owner: root
     group: root
     mode: 0600
-  when: tinc | json_query(\"network[?name=='\" + item[0].name + \"'].node | [0][?name=='\" + inventory_hostname + \"']\") | list | count > 0
+  when: tinc | json_query("network[?name=='" + item[0].name + "'].node | [0][?name=='" + inventory_hostname + "']") | list | count > 0
   with_subelements:
     - "{{tinc.network}}"
     - node
