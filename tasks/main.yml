@@ -154,7 +154,7 @@
 #    - node
 #  notify: tinc_restart
 - name: check json_query
-  debug: msg="{{ tinc.network | json_query("[?name==item[0].name].node") }}"
+  debug: msg="{{ tinc.network | json_query("[?name==item[0].name]") }}"
   with_subelements:
     - "{{tinc.network}}"
     - node
